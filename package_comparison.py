@@ -8,21 +8,26 @@ def get_binary_packages_from_api(branch):
     return response.json()
 
 
-def compare_packages(sisyphus_packages, p10_packages):
+def get_all_arch(packages):
+    all_arch = set(pkg['arch'] for pkg in packages['packages'])
+    return all_arch
+
+
+def compare_packages(sisyphus_packages, p10_packages, arch):
     diff = {
         "p10_not_in_sisyphus": [],
         "sisyphus_not_in_p10": [],
         "greater_version_in_sisyphus": []
     }
 
-    sisyphus_package_names = {pkg["name"] for pkg in sisyphus_packages['packages']}
-    p10_package_names = {pkg["name"] for pkg in p10_packages['packages']}
+    sisyphus_package_names = {pkg["name"] for pkg in sisyphus_packages['packages'] if pkg['arch'] == arch}
+    p10_package_names = {pkg["name"] for pkg in p10_packages['packages'] if pkg['arch'] == arch}
 
     diff["p10_not_in_sisyphus"] = list(p10_package_names - sisyphus_package_names)
     diff["sisyphus_not_in_p10"] = list(sisyphus_package_names - p10_package_names)
 
-    version_release_sisyphus = Counter([f'{pkg["version"]}-{pkg["release"]}' for pkg in sisyphus_packages['packages']])
-    version_release_p10 = Counter([f'{pkg["version"]}-{pkg["release"]}' for pkg in p10_packages['packages']])
+    version_release_sisyphus = Counter([f'{pkg["version"]}-{pkg["release"]}' for pkg in sisyphus_packages['packages'] if pkg['arch'] == arch])
+    version_release_p10 = Counter([f'{pkg["version"]}-{pkg["release"]}' for pkg in p10_packages['packages'] if pkg['arch'] == arch])
 
     for version_release in version_release_sisyphus:
         if version_release in version_release_p10:
@@ -39,7 +44,13 @@ def main():
     sisyphus_packages = get_binary_packages_from_api(sisyphus_branch)
     p10_packages = get_binary_packages_from_api(p10_branch)
 
-    result = compare_packages(sisyphus_packages, p10_packages)
+    result = {}
+
+    all_arch = get_all_arch(sisyphus_packages)
+
+    for arch in all_arch:
+        res = compare_packages(sisyphus_packages, p10_packages, arch)
+        result[arch] = res
 
     return result
 
