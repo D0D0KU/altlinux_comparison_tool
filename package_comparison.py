@@ -38,6 +38,18 @@ def compare_packages(sisyphus_packages, p10_packages, arch):
     return diff
 
 
+def print_to_terminal(result):
+    for arch, res in result.items():
+        print(f"Arch: {arch}")
+        print(f"p10 not in sisyphus: {res['p10_not_in_sisyphus']}")
+        print(f"sisyphus not in p10: {res['sisyphus_not_in_p10']}")
+        print(f"greater version in sisyphus: {res['greater_version_in_sisyphus']}")
+        print()
+
+def save_to_file(result, filename):
+    with open(filename, 'w') as json_file:
+        json.dump(result, json_file)
+
 def main(args):
     sisyphus_branch = args.sisyphus_branch
     p10_branch = args.p10_branch
@@ -52,14 +64,16 @@ def main(args):
         res = compare_packages(sisyphus_packages, p10_packages, arch)
         result[arch] = res
 
-    with open(args.output_file, 'w') as json_file:
-        json.dump(result, json_file)
+    if args.output_file:
+        save_to_file(result, args.output_file)
+    else:
+        print_to_terminal(result)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Compare binary packages between two branches.')
     parser.add_argument('sisyphus_branch', type=str, help='The name of the Sisyphus branch')
     parser.add_argument('p10_branch', type=str, help='The name of the p10 branch')
-    parser.add_argument('--output-file', type=str, default='res.json', help='Output file name for the result')
+    parser.add_argument('--output-file', type=str, help='Output file name for the result')
 
     args = parser.parse_args()
     main(args)
