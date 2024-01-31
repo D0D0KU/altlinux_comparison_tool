@@ -3,6 +3,7 @@ import json
 from collections import Counter
 import argparse
 
+
 def get_binary_packages_from_api(branch):
     url = f"https://rdb.altlinux.org/api/export/branch_binary_packages/{branch}"
     response = requests.get(url)
@@ -46,9 +47,11 @@ def print_to_terminal(result):
         print(f"greater version in sisyphus: {res['greater_version_in_sisyphus']}")
         print()
 
+
 def save_to_file(result, filename):
     with open(filename, 'w') as json_file:
         json.dump(result, json_file)
+
 
 def main(args):
     sisyphus_branch = args.sisyphus_branch
@@ -68,6 +71,7 @@ def main(args):
         save_to_file(result, args.output_file)
     else:
         print_to_terminal(result)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Compare binary packages between two branches.')
