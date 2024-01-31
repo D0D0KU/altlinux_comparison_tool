@@ -1,6 +1,7 @@
 import requests
 import json
 from collections import Counter
+import argparse
 
 def get_binary_packages_from_api(branch):
     url = f"https://rdb.altlinux.org/api/export/branch_binary_packages/{branch}"
@@ -37,25 +38,28 @@ def compare_packages(sisyphus_packages, p10_packages, arch):
     return diff
 
 
-def main():
-    sisyphus_branch = "sisyphus"
-    p10_branch = "p10"
+def main(args):
+    sisyphus_branch = args.sisyphus_branch
+    p10_branch = args.p10_branch
 
     sisyphus_packages = get_binary_packages_from_api(sisyphus_branch)
     p10_packages = get_binary_packages_from_api(p10_branch)
 
     result = {}
-
     all_arch = get_all_arch(sisyphus_packages)
 
     for arch in all_arch:
         res = compare_packages(sisyphus_packages, p10_packages, arch)
         result[arch] = res
 
-    return result
-
+    with open(args.output_file, 'w') as json_file:
+        json.dump(result, json_file)
 
 if __name__ == "__main__":
-    r = main()
-    with open('res.json', 'w') as json_file:
-        json.dump(r, json_file)
+    parser = argparse.ArgumentParser(description='Compare binary packages between two branches.')
+    parser.add_argument('sisyphus_branch', type=str, help='The name of the Sisyphus branch')
+    parser.add_argument('p10_branch', type=str, help='The name of the p10 branch')
+    parser.add_argument('--output-file', type=str, default='res.json', help='Output file name for the result')
+
+    args = parser.parse_args()
+    main(args)
